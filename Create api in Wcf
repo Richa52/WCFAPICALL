@@ -1,0 +1,118 @@
+Step 1
+
+Once you are done with creating the WCF service, you need to specify the attributes on the server type class for ASP.NET compatibility mode, so that the WCF service works as a normal ASMX service and supports all existing ASP.NET features. By setting compatibility mode, the WCF service will have to be hosted on IIS and communicate with its client application using HTTP.
+
+Read more about this in detail here: WCF Web HTTP Programming Object Model.
+
+The following line of code sets ASP.NET compatibility mode
+
+Hide   Copy Code
+[AspNetCompatibilityRequirements(RequirementsMode 
+    = AspNetCompatibilityRequirementsMode.Allowed)]
+public class Service : IService
+{
+    // Your code comes here
+}
+Service.cs
+
+Hide   Shrink    Copy Code
+[AspNetCompatibilityRequirements(RequirementsMode 
+    = AspNetCompatibilityRequirementsMode.Allowed)]
+public class Service : IService
+{
+    public string GetData(int value)
+    {
+        return string.Format("You entered: {0}", value);
+    }
+
+
+    public string[] GetUser(string Id)
+    { 
+        return new User().GetUser(Convert.ToInt32(Id));
+    }
+}
+
+public class User
+{
+
+    Dictionary<int, string> users = null;
+    public User()
+    {
+        users = new Dictionary<int, string>();
+        users.Add(1, "pranay");
+        users.Add(2, "Krunal");
+        users.Add(3, "Aditya");
+        users.Add(4, "Samir");
+    }
+
+    public string[] GetUser(int Id)
+    {
+        var user = from u in users
+                   where u.Key == Id
+                   select u.Value;
+
+        return user.ToArray<string>();
+    }
+
+}
+Step 2
+
+Next you need to specify attributes at operation level in the service contract file for each method or operation. To do this, decorate the method with WebInvoke, which marks a service operation as one that responds to HTTP requests other than GET. Accordingly, your operational level code in the contract file will be as follows:
+
+Hide   Copy Code
+[OperationContract]
+[OperationContract]
+[WebInvoke(Method = "POST", 
+ BodyStyle = WebMessageBodyStyle.Wrapped,
+ ResponseFormat = WebMessageFormat.Json)]
+string[] GetUser(string Id);
+As you can see in the code, sub-attributes having values to support calling via jQuery are marked with Method=post, so data gets posted to the service via a POST method.
+
+ResponseFormat = WebMessageFormat.Json indicates that data is returned in JSON format.
+
+IService.cs
+
+Hide   Copy Code
+[ServiceContract]
+public interface IService
+{
+    [OperationContract]
+    [WebInvoke(Method = "GET",
+     ResponseFormat = WebMessageFormat.Json)]
+    string GetData(int value);
+
+    [OperationContract]
+    [WebInvoke(Method = "POST", 
+     BodyStyle = WebMessageBodyStyle.Wrapped, 
+     ResponseFormat = WebMessageFormat.Json)]
+    string[] GetUser(string Id);
+}
+Step 3
+
+You need to change the default configuration created by Visual Studio in Web.Config file for WCF services, so that it works with the HTTP protocol request send by jQuery client code.
+
+Hide   Copy Code
+<system.serviceModel>
+  <behaviors>
+   <serviceBehaviors>
+    <behavior name="ServiceBehavior">
+     <serviceMetadata httpGetEnabled="true"/>
+     <serviceDebug includeExceptionDetailInFaults="true"/>
+    </behavior>
+   </serviceBehaviors>
+   <endpointBehaviors>
+    <behavior name="EndpBehavior">
+     <webHttp/>
+    </behavior>
+   </endpointBehaviors>
+  </behaviors>
+  <services>
+   <service behaviorConfiguration="ServiceBehavior" name="Service">
+    <endpoint address="" binding="webHttpBinding" 
+        contract="IService" behaviorConfiguration="EndpBehavior"/>
+   </service>
+  </services>
+</system.serviceModel>
+As you can see in above config file, the EndPoint setting is changed, and EndPointBehaviors added to support WEBHTTP requests.
+
+Note: Endpoint settings done in the config works in conjunction with the WebInvoke attribute of the operation and the compatibility attribute set in ServiceType to support HTTP requests sent by jQuery.
