@@ -1,0 +1,88 @@
+To consume a web service using jQuery, that is to make a call to the WCF service, you either use jQuery.ajax() or jQuery.getJSON(). In this article I used the jQuery.ajax()method.
+
+To set the request, first define a variable. This will be helpful when you are calling multiple methods and creating a different js file to call the WCF service.
+
+Hide   Copy Code
+<script type="text/javascript">
+
+    var Type;
+    var Url;
+    var Data;
+    var ContentType;
+    var DataType;
+    var ProcessData;
+The following function initializes variables which are defined above to make a call to the service.
+
+Hide   Copy Code
+function WCFJSON() {
+    var userid = "1";
+    Type = "POST";
+    Url = "Service.svc/GetUser";
+    Data = '{"Id": "' + userid + '"}';
+    ContentType = "application/json; charset=utf-8";
+    DataType = "json"; varProcessData = true; 
+    CallService();
+}
+The CallService function sends requests to the service by setting data in $.ajax.
+
+Hide   Copy Code
+// Function to call WCF  Service       
+function CallService() {
+    $.ajax({
+        type: Type, //GET or POST or PUT or DELETE verb
+        url: Url, // Location of the service
+        data: Data, //Data sent to server
+        contentType: ContentType, // content type sent to server
+        dataType: DataType, //Expected data format from server
+        processdata: ProcessData, //True or False
+        success: function(msg) {//On Successfull service call
+            ServiceSucceeded(msg);
+        },
+        error: ServiceFailed// When Service call fails
+    });
+}
+
+function ServiceFailed(result) {
+    alert('Service call failed: ' + result.status + '' + result.statusText);
+    Type = null;
+    varUrl = null;
+    Data = null; 
+    ContentType = null;
+    DataType = null;
+    ProcessData = null;
+}
+Note: The following code checks the result.GetUserResult statement, so your result object gets the property your service method name + Result. Otherwise, it will give an error like object not found in Javascript.
+
+Hide   Shrink    Copy Code
+function ServiceSucceeded(result) {
+    if (DataType == "json") {
+        resultObject = result.GetUserResult;
+        
+        for (i = 0; i < resultObject.length; i++) {
+            alert(resultObject[i]);
+        }
+            
+    }
+        
+}
+
+function ServiceFailed(xhr) {
+    alert(xhr.responseText);
+
+    if (xhr.responseText) {
+        var err = xhr.responseText;
+        if (err)
+            error(err);
+        else
+            error({ Message: "Unknown server error." })
+    }
+    
+    return;
+}
+
+$(document).ready(
+    function() {
+        WCFJSON();
+    }
+);
+</script>
