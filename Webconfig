@@ -1,0 +1,28 @@
+
+
+issue "Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://192.168.2.53/XYZ/XYZ.svc/GetGuid. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing)."
+
+Resloved put below code in webconfig.cs
+I just put in global setting
+
+in global.aspx file write code
+    protected void Application_BeginRequest()
+    {
+        if (Request.Headers.AllKeys.Contains("Origin") && Request.HttpMethod == "OPTIONS")
+        {
+            Response.Flush();
+        }
+    }
+and did some changes in web.config(system.webserver) settings
+
+<configuration>
+ <system.webServer>
+<httpProtocol>
+  <customHeaders>
+    <add name="Access-Control-Allow-Origin" value="*" />
+    <add name="Access-Control-Allow-Headers" value="Origin, X-Requested-With, Content-Type, Accept,Authorization" />
+    <add name="Access-Control-Allow-Methods" value="GET, POST, PUT, DELETE, OPTIONS" />
+  </customHeaders>
+</httpProtocol>
+</system.webServer>
+</configuration>
